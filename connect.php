@@ -91,19 +91,25 @@ function sign($jwk, $input): string
     return sprintf("%s.%s", $input, base64UrlEncode(fromAsn1($signature, 64)));
 }
 
-$secretKey = '{"kty":"EC","alg":"ES256","crv":"P-256","x":"qstU4ndOHY5MrvdH-22MEzHZ-mLh-9DVLA8LON8KnwY","y":"kYRHlCnyBnW7YFcSt0D2NVaPjlYeNHad6NPYOJ65L-c","d":"WPSKcwAq1iQdaTAkfffF25yOu9R-FjetPt-Ij0uMQ6o"}';
-
-$time = time();
+$secretKey = '
+        {
+            "kty":"EC","alg":"ES256","crv":"P-256",
+            "x":"pSH0jvbtVZiseTpJZk0_yfudEIv86uwjeH_gr1qmOGA",
+            "y":"eGdC9EIGmhCheM_T8vhS4Qwk7RfaPRBxF3W5omgBc_M",
+            "d":"DuSjR5eZBp5S-9HNKA8kRQFA_3Akkept-dTbwFoq_3w"
+        }
+';
 
 $jwk = json_decode($secretKey, true);
 
-$headers["typ"] = "JWT";
-$headers["alg"] = "ES256";
+$headers["typ"] = 'JWT';
+$headers["alg"] = 'ES256';
+$headers["kid"] = '2';
 
-$claims["uid"] = 6;
-$claims["aud"] = array("usr");
-$claims["iat"] = $time;
-$claims["jti"] = "" . $time * 1000 . "";
+$claims["email"] = "bitzlato.demo@gmail.com";
+$claims["aud"] = array('usr');
+$claims["iat"] = time();
+$claims["jti"] = "" . rand() . "";
 
 $header = base64UrlEncode(json_encode($headers, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 $payload = base64UrlEncode(json_encode($claims, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
@@ -111,11 +117,13 @@ $unsignedToken = $header . '.' . $payload;
 
 $jws = sign($jwk, $unsignedToken);
 
+echo 'JWT: ' . $jws . "\n";
+
 $curl = curl_init();
 // Set some options - we are passing in a useragent too here
 curl_setopt_array($curl, [
     CURLOPT_RETURNTRANSFER => 1,
-    CURLOPT_URL => 'http://localhost:8080/api/auth/whoami',
+    CURLOPT_URL => 'https://demo.bitzlato.com/api/auth/whoami',
     CURLOPT_HTTPHEADER => array(
         "Authorization: Bearer $jws"
     )
